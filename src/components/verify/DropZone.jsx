@@ -6,6 +6,7 @@ import { Search, Upload, File, X, Zap } from 'lucide-react';
 import LoadingSpinner from '../shared/LoadingSpinner';
 import { ethers } from 'ethers';
 import { TruestampContract } from '../../lib/contract';
+import { CONSTANTS } from '../../lib/constants';
 
 export default function DropZone({ onVerify }) {
   const [file, setFile] = useState(null);
@@ -38,15 +39,14 @@ export default function DropZone({ onVerify }) {
 
       // ── Step 2: Query on-chain documentIndex(docHash) ──
       // documentIndex returns the batchId (uint256); 0 means not found
+      // Read-only query — no wallet/signer needed
       const readProvider = new ethers.JsonRpcProvider(
-        process.env.REACT_APP_ALCHEMY_RPC_URL
-      )
-      const writeProvider = new ethers.BrowserProvider(window.ethereum)
-      const signer = await writeProvider.getSigner()
+        process.env.NEXT_PUBLIC_ALCHEMY_RPC_URL || CONSTANTS.RPC_URL
+      );
       const contract = new ethers.Contract(
         TruestampContract.address,
         TruestampContract.abi,
-        readProvider  // read-only call — provider is fine here
+        readProvider
       );
 
       const batchIdBN = await contract.documentIndex(docHash);
@@ -151,7 +151,7 @@ export default function DropZone({ onVerify }) {
             id="verify-submit-btn"
           >
             {loading ? (
-              <><LoadingSpinner size="sm" /> Verifying on Polygon...</>
+              <><LoadingSpinner size="sm" /> Verifying on Polygon Amoy...</>
             ) : (
               <><Zap size={16} /> Verify Authenticity</>
             )}

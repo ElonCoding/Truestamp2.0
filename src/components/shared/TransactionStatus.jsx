@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { CheckCircle, Clock, XCircle, ExternalLink, X } from 'lucide-react';
+import { CONSTANTS } from '../../lib/constants';
 
 // Global transaction state - in production wire to wagmi useWaitForTransaction
 let globalSetTx = null;
@@ -54,12 +55,12 @@ export default function TransactionStatus() {
           )}
           {tx.hash && (
             <a
-              href={`https://amoy.polygonscan.com/tx/${tx.hash}`}
+              href={`${CONSTANTS.BLOCK_EXPLORER_URL}/tx/${tx.hash}`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1 text-xs text-brand-400 hover:text-brand-300 mt-1 transition-colors"
             >
-              View on PolygonScan <ExternalLink size={10} />
+              View on Amoy Explorer <ExternalLink size={10} />
             </a>
           )}
           {tx.status === 'pending' && (

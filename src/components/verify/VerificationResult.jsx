@@ -1,7 +1,8 @@
 'use client';
 
-import { CheckCircle, XCircle, Hash, Layers, RefreshCw, Share2, Copy } from 'lucide-react';
+import { CheckCircle, XCircle, Hash, Layers, RefreshCw, Share2, Copy, ExternalLink } from 'lucide-react';
 import IssuerDetails from './IssuerDetails';
+import { CONSTANTS } from '../../lib/constants';
 
 export default function VerificationResult({ result, onReset }) {
   if (!result) return null;
@@ -37,7 +38,7 @@ export default function VerificationResult({ result, onReset }) {
 
         <p className="text-white/50 text-base">
           {verified
-            ? `This document is cryptographically verified on Polygon. It was issued by a TrueStamp-approved authority.`
+            ? `This document is cryptographically verified on Polygon Amoy Testnet. It was issued by a TrueStamp-approved authority.`
             : `No matching record found on the TrueStamp network. This document may be tampered, unregistered, or from an unknown issuer.`
           }
         </p>
@@ -65,9 +66,20 @@ export default function VerificationResult({ result, onReset }) {
           </div>
           {verified && batchId && (
             <div className="glass-card rounded-xl p-4 flex-1">
-              <div className="flex items-center gap-1.5 mb-1">
-                <Layers size={12} className="text-brand-400" />
-                <p className="text-xs text-white/30">Batch ID</p>
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-1.5">
+                  <Layers size={12} className="text-brand-400" />
+                  <p className="text-xs text-white/30">Batch ID</p>
+                </div>
+                <a
+                  href={`${CONSTANTS.BLOCK_EXPLORER_URL}/address/${CONSTANTS.NETWORK_PARAMS.rpcUrls[0]}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-brand-400 hover:text-brand-300 transition-colors"
+                  title="View on Amoy Explorer"
+                >
+                  <ExternalLink size={10} />
+                </a>
               </div>
               <p className="font-mono text-xs text-brand-400">#{batchId.slice(0, 12)}</p>
             </div>

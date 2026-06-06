@@ -1,30 +1,34 @@
 'use client';
 
 import { useState } from 'react';
-import { ShieldCheck, X, AlertTriangle, Wallet, Building2, ExternalLink } from 'lucide-react';
+import { ShieldCheck, X, AlertTriangle, Wallet, Building2 } from 'lucide-react';
 import LoadingSpinner from '../shared/LoadingSpinner';
 import { triggerTx } from '../shared/TransactionStatus';
+import { useContract } from '../../hooks/useContract';
+import { CONSTANTS } from '../../lib/constants';
 
 export default function ApprovalModal({ app, onClose, onApproved }) {
-  const [loading, setLoading] = useState(false);
+  const { whitelistAuthority, loading } = useContract();
   const [error, setError] = useState('');
 
   const handleApprove = async () => {
-    setLoading(true);
     setError('');
-    try {
-      // Demo: simulate on-chain tx
-      triggerTx({ status: 'pending', description: `Whitelisting ${app.orgName}...`, hash: null });
-      await new Promise(r => setTimeout(r, 2500));
-      const mockHash = '0x' + Math.random().toString(16).slice(2, 66);
-      triggerTx({ status: 'confirmed', description: `${app.orgName} whitelisted!`, hash: mockHash });
+    triggerTx({ status: 'pending', description: `Whitelisting ${app.orgName}...`, hash: null });
+
+    const result = await whitelistAuthority(
+      app.walletAddress,
+      app.orgName,
+      app.department || '',
+      'ipfs://dummy'
+    );
+
+    if (result.success) {
+      triggerTx({ status: 'confirmed', description: `${app.orgName} whitelisted!`, hash: result.txHash });
       onApproved?.();
       onClose();
-    } catch (e) {
+    } else {
       triggerTx({ status: 'failed', description: 'Transaction failed' });
-      setError('Transaction failed. Check your wallet and try again.');
-    } finally {
-      setLoading(false);
+      setError(result.error || 'Transaction failed. Check your wallet and try again.');
     }
   };
 
@@ -47,7 +51,7 @@ export default function ApprovalModal({ app, onClose, onApproved }) {
           </div>
           <div>
             <h2 className="text-xl font-bold text-white">Approve Authority</h2>
-            <p className="text-sm text-white/40">On-chain whitelisting transaction</p>
+            <p className="text-sm text-white/40">On-chain whitelisting · {CONSTANTS.NETWORK_PARAMS.chainName}</p>
           </div>
         </div>
 
@@ -63,14 +67,26 @@ export default function ApprovalModal({ app, onClose, onApproved }) {
             <span className="text-white/50">Wallet:</span>
             <span className="text-white font-mono text-xs">{app.walletAddress?.slice(0, 18)}...</span>
           </div>
+          {app.walletAddress && (
+            <a
+              href={`${CONSTANTS.BLOCK_EXPLORER_URL}/address/${app.walletAddress}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-brand-400 hover:text-brand-300 underline transition-colors"
+            >
+              View on Amoy Explorer ↗
+            </a>
+          )}
         </div>
 
         {/* Warning */}
         <div className="flex items-start gap-3 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl mb-6">
           <AlertTriangle size={16} className="text-yellow-400 flex-shrink-0 mt-0.5" />
           <p className="text-xs text-white/60">
-            This will call <code className="text-brand-400 font-mono bg-brand-500/10 px-1 rounded">whitelistAuthority()</code> on Polygon and grant the{' '}
-            <code className="text-brand-400 font-mono bg-brand-500/10 px-1 rounded">ISSUER_ROLE</code>. This action is <strong className="text-white">irreversible</strong> without a revoke transaction.
+            This will call <code className="text-brand-400 font-mono bg-brand-500/10 px-1 rounded">whitelistAuthority()</code> on{' '}
+            {CONSTANTS.NETWORK_PARAMS.chainName} and grant the{' '}
+            <code className="text-brand-400 font-mono bg-brand-500/10 px-1 rounded">ISSUER_ROLE</code>. This action is{' '}
+            <strong className="text-white">irreversible</strong> without a revoke transaction.
           </p>
         </div>
 

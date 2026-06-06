@@ -1,12 +1,12 @@
 import { Resend } from 'resend';
 
-const resend = new Resend('re_4PBJ6bid_5PR3SKFw4Af81hRbZsxDcbix');
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const sendEmail = async () => {
   try {
     const data = await resend.emails.send({
-      from: 'onboarding@resend.dev',
-      to: 'sharmaparikshit405@gmail.com',
+      from: [EMAIL_ADDRESS]
+      to: [EMAIL_ADDRESS]
       subject: 'Hello World',
       html: '<p>Congrats on sending your <strong>first email</strong>!</p>'
     });

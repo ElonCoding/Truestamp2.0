@@ -5,6 +5,7 @@ import { useDropzone } from 'react-dropzone';
 import { Upload, File, X, CheckCircle, AlertCircle, Zap, Loader2 } from 'lucide-react';
 import { ethers } from 'ethers';
 import { TruestampContract } from '../../lib/contract';
+import { CONSTANTS } from '../../lib/constants';
 
 const STAGE_LABELS = ['Uploading to IPFS', 'Building Merkle Tree', 'Submitting On-Chain'];
 
@@ -87,8 +88,34 @@ export default function BulkUploader({ onBatchComplete }) {
     try {
       if (!window.ethereum) throw new Error('MetaMask not found. Install MetaMask to submit on-chain.');
 
+      // Check current chain ID and switch to Amoy if not on it
+      const currentChainId = await window.ethereum.request({ method: 'eth_chainId' });
+      if (currentChainId !== CONSTANTS.SUPPORTED_CHAIN_ID_HEX) {
+        try {
+          await window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: CONSTANTS.SUPPORTED_CHAIN_ID_HEX }],
+          });
+        } catch (switchError) {
+          if (switchError.code === 4902 || (switchError.message && switchError.message.includes('Unrecognized chain ID'))) {
+            try {
+              await window.ethereum.request({
+                method: 'wallet_addEthereumChain',
+                params: [CONSTANTS.NETWORK_PARAMS],
+              });
+            } catch (addError) {
+              console.error('Failed to add network:', addError);
+              throw new Error(`Please add and switch to ${CONSTANTS.NETWORK_PARAMS.chainName} in MetaMask.`);
+            }
+          } else {
+            console.error('Failed to switch network:', switchError);
+            throw new Error(`Please switch to ${CONSTANTS.NETWORK_PARAMS.chainName} in MetaMask.`);
+          }
+        }
+      }
+
       const readProvider = new ethers.JsonRpcProvider(
-        process.env.REACT_APP_ALCHEMY_RPC_URL
+        process.env.NEXT_PUBLIC_ALCHEMY_RPC_URL || CONSTANTS.RPC_URL
       )
       const writeProvider = new ethers.BrowserProvider(window.ethereum)
       const signer = await writeProvider.getSigner(); // ← signer required for write tx
@@ -130,7 +157,16 @@ export default function BulkUploader({ onBatchComplete }) {
 
     } catch (err) {
       console.error('On-chain submission failed:', err);
-      setErrorMsg(err?.reason || err?.shortMessage || err?.message || 'Transaction failed');
+      let message = err?.reason || err?.shortMessage || err?.message || 'Transaction failed';
+
+      // Catch AccessControlUnauthorizedAccount specifically
+      if (err.data && err.data.startsWith('0xe2517d3f')) {
+        message = "Access Denied: Your wallet is not authorized as an Issuer. Please ensure you have been whitelisted by the admin.";
+      } else if (err.info?.error?.data?.startsWith('0xe2517d3f') || err.error?.data?.startsWith('0xe2517d3f')) {
+        message = "Access Denied: Your wallet is not authorized as an Issuer. Please ensure you have been whitelisted by the admin.";
+      }
+
+      setErrorMsg(message);
       setStage('error');
     }
   };
@@ -246,7 +282,7 @@ export default function BulkUploader({ onBatchComplete }) {
         <div className="glass-card border border-green-500/30 bg-green-500/5 rounded-2xl p-8 text-center verified-glow">
           <CheckCircle size={48} className="text-green-400 mx-auto mb-4" />
           <h3 className="text-xl font-bold text-white mb-2">Batch Submitted On-Chain!</h3>
-          <p className="text-sm text-white/50 mb-6">{result.docCount} documents anchored on Polygon</p>
+          <p className="text-sm text-white/50 mb-6">{result.docCount} documents anchored on Polygon Amoy Testnet</p>
           <div className="space-y-3 text-left mb-6">
             <div className="glass-card rounded-xl p-4">
               <p className="text-xs text-white/30 mb-1">Merkle Root (On-Chain)</p>
@@ -260,7 +296,7 @@ export default function BulkUploader({ onBatchComplete }) {
               <div className="glass-card rounded-xl p-4">
                 <p className="text-xs text-white/30 mb-1">Transaction Hash</p>
                 <a
-                  href={`https://polygonscan.com/tx/${result.txHash}`}
+                  href={`${CONSTANTS.BLOCK_EXPLORER_URL}/tx/${result.txHash}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="font-mono text-xs text-brand-400 break-all hover:text-brand-300 transition-colors"
