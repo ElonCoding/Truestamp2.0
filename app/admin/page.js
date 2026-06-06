@@ -1,38 +1,73 @@
 'use client';
 
-import { useState } from 'react';
-import { Shield, Users, CheckCircle, Clock, XCircle, TrendingUp } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Shield, Users, CheckCircle, Clock, XCircle, TrendingUp, AlertCircle } from 'lucide-react';
 import ApplicationCard from '../../src/components/admin/ApplicationCard';
 import ApprovalModal from '../../src/components/admin/ApprovalModal';
 import RoleGuard from '../../src/components/shared/RoleGuard';
-
-// Mock data — replace with Firebase Firestore fetch
-const MOCK_APPS = [
-  { id: '1', orgName: 'LNCT University', orgType: 'University', department: "Registrar's Office", email: 'admin@lnct.ac.in', website: 'https://lnct.ac.in', walletAddress: '0xAbCd1234567890AbCd1234567890AbCd12345678', status: 'pending', submittedAt: '2025-05-20T10:00:00Z', emailVerified: true },
-  { id: '2', orgName: 'AIIMS Bhopal', orgType: 'Hospital', department: 'Medical Records', email: 'records@aiimsbhopal.edu.in', website: 'https://aiimsbhopal.edu.in', walletAddress: '0x1234AbCd5678Ef901234AbCd5678Ef9012345678', status: 'pending', submittedAt: '2025-05-21T14:30:00Z', emailVerified: true },
-  { id: '3', orgName: 'MP State Government', orgType: 'Government Body', department: 'Revenue Department', email: 'revenue@mp.gov.in', website: 'https://mp.gov.in', walletAddress: '0xDeAdBeEf1234567890DeAdBeEf1234567890DeAd', status: 'approved', submittedAt: '2025-05-18T09:15:00Z', emailVerified: true },
-  { id: '4', orgName: 'TechCorp Ltd', orgType: 'Corporate', department: 'HR', email: 'hr@techcorp.com', website: 'https://techcorp.com', walletAddress: '0xFaCe0987654321FaCe0987654321FaCe09876543', status: 'rejected', submittedAt: '2025-05-15T08:00:00Z', emailVerified: false },
-];
-
-const statsData = [
-  { label: 'Pending Review', value: 2, icon: Clock, color: 'text-yellow-400', bg: 'bg-yellow-500/10 border-yellow-500/20' },
-  { label: 'Approved', value: 1, icon: CheckCircle, color: 'text-green-400', bg: 'bg-green-500/10 border-green-500/20' },
-  { label: 'Rejected', value: 1, icon: XCircle, color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/20' },
-  { label: 'Total Applications', value: 4, icon: TrendingUp, color: 'text-brand-400', bg: 'bg-brand-500/10 border-brand-500/20' },
-];
+import LoadingSpinner from '../../src/components/shared/LoadingSpinner';
 
 export default function AdminPage() {
   const [filter, setFilter] = useState('all');
   const [selectedApp, setSelectedApp] = useState(null);
+  const [applications, setApplications] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const filtered = filter === 'all' ? MOCK_APPS : MOCK_APPS.filter(a => a.status === filter);
+  // Fetch applications from the API
+  const fetchApplications = useCallback(async () => {
+    setIsLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/admin/applications');
+      const data = await res.json();
+      if (data.success) {
+        setApplications(data.applications || []);
+      } else {
+        setError(data.error || 'Failed to fetch applications');
+      }
+    } catch (err) {
+      console.error('Error fetching applications:', err);
+      setError('Connection error. Failed to retrieve applications.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchApplications();
+  }, [fetchApplications]);
+
+  // Handle application approved refresh
+  const handleApproved = () => {
+    setSelectedApp(null);
+    fetchApplications();
+  };
+
+  // Filter application list
+  const filtered = filter === 'all' 
+    ? applications 
+    : applications.filter(a => a.status === filter);
+
+  // Compute dynamic stats
+  const pendingCount = applications.filter(a => a.status === 'pending').length;
+  const approvedCount = applications.filter(a => a.status === 'approved').length;
+  const rejectedCount = applications.filter(a => a.status === 'rejected').length;
+  const totalCount = applications.length;
+
+  const statsData = [
+    { label: 'Pending Review', value: pendingCount, icon: Clock, color: 'text-yellow-400', bg: 'bg-yellow-500/10 border-yellow-500/20' },
+    { label: 'Approved', value: approvedCount, icon: CheckCircle, color: 'text-green-400', bg: 'bg-green-500/10 border-green-500/20' },
+    { label: 'Rejected', value: rejectedCount, icon: XCircle, color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/20' },
+    { label: 'Total Applications', value: totalCount, icon: TrendingUp, color: 'text-brand-400', bg: 'bg-brand-500/10 border-brand-500/20' },
+  ];
 
   return (
     <RoleGuard requiredRole="admin">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
         {/* Header */}
         <div className="flex items-center gap-3 mb-10">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shadow-[0_0_20px_rgba(123,63,228,0.3)]">
             <Shield size={24} className="text-white" />
           </div>
           <div>
@@ -46,7 +81,7 @@ export default function AdminPage() {
           {statsData.map(({ label, value, icon: Icon, color, bg }) => (
             <div key={label} className={`glass-card border ${bg} p-5 rounded-2xl`}>
               <Icon size={20} className={`${color} mb-3`} />
-              <div className="text-2xl font-extrabold text-white">{value}</div>
+              <div className="text-2xl font-extrabold text-white">{isLoading ? '...' : value}</div>
               <div className="text-xs text-white/40 mt-1">{label}</div>
             </div>
           ))}
@@ -69,20 +104,38 @@ export default function AdminPage() {
           ))}
         </div>
 
-        {/* Applications grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-          {filtered.map(app => (
-            <div key={app.id} onClick={() => app.status === 'pending' && setSelectedApp(app)}>
-              <ApplicationCard app={app} />
-            </div>
-          ))}
-        </div>
-
-        {filtered.length === 0 && (
-          <div className="text-center py-20 text-white/30">
-            <Users size={48} className="mx-auto mb-4 opacity-30" />
-            <p>No {filter} applications</p>
+        {/* Error message */}
+        {error && (
+          <div className="flex items-center gap-2 p-4 bg-red-500/10 border border-red-500/20 rounded-xl mb-6 text-red-400">
+            <AlertCircle size={18} />
+            <span className="text-sm">{error}</span>
           </div>
+        )}
+
+        {/* Loading State */}
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <LoadingSpinner size="lg" />
+            <p className="text-white/40 text-sm mt-4">Loading applications...</p>
+          </div>
+        ) : (
+          <>
+            {/* Applications grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+              {filtered.map(app => (
+                <div key={app.id} onClick={() => app.status === 'pending' && setSelectedApp(app)}>
+                  <ApplicationCard app={app} />
+                </div>
+              ))}
+            </div>
+
+            {filtered.length === 0 && (
+              <div className="text-center py-20 text-white/30">
+                <Users size={48} className="mx-auto mb-4 opacity-30" />
+                <p>No {filter} applications</p>
+              </div>
+            )}
+          </>
         )}
 
         {/* Approval modal */}
@@ -90,7 +143,7 @@ export default function AdminPage() {
           <ApprovalModal
             app={selectedApp}
             onClose={() => setSelectedApp(null)}
-            onApproved={() => setSelectedApp(null)}
+            onApproved={handleApproved}
           />
         )}
       </div>

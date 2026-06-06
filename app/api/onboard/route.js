@@ -54,31 +54,29 @@ export async function POST(request) {
       submittedAt: new Date().toISOString(),
     };
 
-    // --- Firebase Firestore integration (enabled when credentials are configured) ---
+    // Store application using centralized helper (Firestore or local JSON fallback)
     try {
-      const { initializeApp, getApps, cert } = await import('firebase-admin/app');
-      const { getFirestore } = await import('firebase-admin/firestore');
-
-      const firebaseConfig = {
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-      };
-
-      if (firebaseConfig.projectId && firebaseConfig.clientEmail && firebaseConfig.privateKey) {
-        if (!getApps().length) {
-          initializeApp({ credential: cert(firebaseConfig) });
+      const { getFirestoreDb, getLocalApplications, saveLocalApplications } = await import('../../../src/lib/firebaseAdmin');
+      const db = getFirestoreDb();
+      let savedToFirestore = false;
+      if (db) {
+        try {
+          await db.collection('applications').doc(application.id).set(application);
+          savedToFirestore = true;
+          console.log(`[Onboard] Application ${application.id} saved to Firestore.`);
+        } catch (firestoreErr) {
+          console.warn('[Onboard] Firestore write failed, using local JSON:', firestoreErr.message);
         }
-        const db = getFirestore();
-        await db.collection('applications').doc(application.id).set(application);
-        console.log(`[Onboard] Application ${application.id} saved to Firestore.`);
-      } else {
-        // Firebase not fully configured — log locally only
-        console.log('[Onboard] Firebase not configured. Application (in-memory only):', application);
       }
-    } catch (firebaseErr) {
-      // Don't fail the request if Firebase is unavailable
-      console.warn('[Onboard] Firestore write failed (continuing):', firebaseErr.message);
+      
+      if (!savedToFirestore) {
+        const apps = getLocalApplications();
+        apps.push(application);
+        saveLocalApplications(apps);
+        console.log(`[Onboard] Application ${application.id} saved to local JSON.`);
+      }
+    } catch (dbErr) {
+      console.warn('[Onboard] Database write failed (continuing):', dbErr.message);
     }
 
     // Send notification email to admin if Resend is configured

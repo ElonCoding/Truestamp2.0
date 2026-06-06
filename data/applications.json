@@ -1,0 +1,66 @@
+[
+  {
+    "id": "1",
+    "orgName": "LNCT University",
+    "orgType": "University",
+    "department": "Registrar's Office",
+    "email": "admin@lnct.ac.in",
+    "website": "https://lnct.ac.in",
+    "walletAddress": "0xAbCd1234567890AbCd1234567890AbCd12345678",
+    "status": "pending",
+    "submittedAt": "2025-05-20T10:00:00Z",
+    "emailVerified": true
+  },
+  {
+    "id": "2",
+    "orgName": "AIIMS Bhopal",
+    "orgType": "Hospital",
+    "department": "Medical Records",
+    "email": "records@aiimsbhopal.edu.in",
+    "website": "https://aiimsbhopal.edu.in",
+    "walletAddress": "0x1234AbCd5678Ef901234AbCd5678Ef9012345678",
+    "status": "pending",
+    "submittedAt": "2025-05-21T14:30:00Z",
+    "emailVerified": true
+  },
+  {
+    "id": "3",
+    "orgName": "MP State Government",
+    "orgType": "Government Body",
+    "department": "Revenue Department",
+    "email": "revenue@mp.gov.in",
+    "website": "https://mp.gov.in",
+    "walletAddress": "0xDeAdBeEf1234567890DeAdBeEf1234567890DeAd",
+    "status": "approved",
+    "submittedAt": "2025-05-18T09:15:00Z",
+    "emailVerified": true
+  },
+  {
+    "id": "4",
+    "orgName": "TechCorp Ltd",
+    "orgType": "Corporate",
+    "department": "HR",
+    "email": "hr@techcorp.com",
+    "website": "https://techcorp.com",
+    "walletAddress": "0xFaCe0987654321FaCe0987654321FaCe09876543",
+    "status": "rejected",
+    "submittedAt": "2025-05-15T08:00:00Z",
+    "emailVerified": false
+  },
+  {
+    "id": "app_1780755533053_gfltb6",
+    "orgName": "aer",
+    "orgType": "Corporate",
+    "department": "adf",
+    "website": "adf",
+    "email": "sharmaparikshit405@gmail.com",
+    "walletAddress": "0xff00d19db6668537116ecda91ac07fa448a2223e",
+    "description": "asdf",
+    "members": [],
+    "chainId": 80002,
+    "network": "Polygon Amoy Testnet",
+    "status": "pending",
+    "emailVerified": true,
+    "submittedAt": "2026-06-06T14:18:53.053Z"
+  }
+]

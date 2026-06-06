@@ -23,8 +23,22 @@ export default function ApprovalModal({ app, onClose, onApproved }) {
     );
 
     if (result.success) {
+      try {
+        await fetch('/api/admin/whitelist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            applicationId: app.id,
+            status: 'approved',
+            txHash: result.txHash,
+          }),
+        });
+      } catch (dbErr) {
+        console.error('Failed to update db status:', dbErr);
+      }
+
       triggerTx({ status: 'confirmed', description: `${app.orgName} whitelisted!`, hash: result.txHash });
-      onApproved?.();
+      onApproved?.(result.txHash);
       onClose();
     } else {
       triggerTx({ status: 'failed', description: 'Transaction failed' });
