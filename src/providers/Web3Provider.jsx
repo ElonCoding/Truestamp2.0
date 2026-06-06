@@ -1,32 +1,63 @@
 'use client';
 
 import { useState, createContext, useContext } from 'react';
+import { ethers } from 'ethers';
+import { TruestampContract } from '../lib/contract';
 
-// Web3 Provider - placeholder for RainbowKit/wagmi
-// Replace body with actual RainbowKit setup when keys are available
 const Web3Context = createContext({
   address: null,
   isConnected: false,
-  connect: () => {},
+  connect: async () => {},
   disconnect: () => {},
   role: 'user', // 'admin' | 'authority' | 'user'
 });
 
 export const useWeb3 = () => useContext(Web3Context);
 
+// Resolve role: admin > authority (ISSUER_ROLE on-chain) > user
+async function resolveRole(account) {
+  const adminWallet = process.env.NEXT_PUBLIC_ADMIN_WALLET_ADDRESS || '';
+  if (adminWallet && account.toLowerCase() === adminWallet.toLowerCase()) {
+    return 'admin';
+  }
+  try {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const contract = new ethers.Contract(
+      TruestampContract.address,
+      TruestampContract.abi,
+      provider
+    );
+    // Fetch ISSUER_ROLE bytes32 from contract, then check hasRole
+    const issuerRole = await contract.ISSUER_ROLE();
+    const isAuthority = await contract.hasRole(issuerRole, account);
+    if (isAuthority) return 'authority';
+  } catch (err) {
+    console.warn('Role check failed (chain unavailable?):', err.message);
+  }
+  return 'user';
+}
+
 export function Web3Provider({ children }) {
   const [address, setAddress] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const [role, setRole] = useState('user');
 
-  const connect = () => {
-    // Placeholder: swap with RainbowKit connect
-    const mockAddr = '0x' + Math.random().toString(16).slice(2, 42).padEnd(40, '0');
-    setAddress(mockAddr);
-    setIsConnected(true);
-    // Demo: assign role based on env admin address
-    if (mockAddr.toLowerCase() === (process.env.NEXT_PUBLIC_ADMIN_WALLET || '').toLowerCase()) {
-      setRole('admin');
+  const connect = async () => {
+    if (!window.ethereum || !window.ethereum.isMetaMask) {
+      alert('MetaMask not found. Please install MetaMask.');
+      return;
+    }
+    try {
+      const accounts = await window.ethereum.request({
+        method: 'eth_requestAccounts',
+      });
+      const account = accounts[0];
+      setAddress(account);
+      setIsConnected(true);
+      const resolvedRole = await resolveRole(account);
+      setRole(resolvedRole);
+    } catch (error) {
+      console.error('User rejected connection:', error);
     }
   };
 

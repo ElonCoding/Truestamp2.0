@@ -4,6 +4,8 @@ import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Search, Upload, File, X, Zap } from 'lucide-react';
 import LoadingSpinner from '../shared/LoadingSpinner';
+import { ethers } from 'ethers';
+import { TruestampContract } from '../../lib/contract';
 
 export default function DropZone({ onVerify }) {
   const [file, setFile] = useState(null);
@@ -27,23 +29,62 @@ export default function DropZone({ onVerify }) {
   const handleVerify = async () => {
     if (!file) return;
     setLoading(true);
-    await new Promise(r => setTimeout(r, 2200)); // simulate hash + chain lookup
-    setLoading(false);
-    // Demo: 70% chance verified
-    const verified = Math.random() > 0.3;
-    onVerify?.({
-      verified,
-      file,
-      hash: '0x' + Array.from(crypto.getRandomValues(new Uint8Array(32))).map(b => b.toString(16).padStart(2, '0')).join(''),
-      batchId: verified ? 'abc123def456' : null,
-      issuer: verified ? {
-        orgName: 'LNCT University',
-        department: "Registrar's Office",
-        walletAddress: '0xAbCd1234567890AbCd1234567890AbCd12345678',
-        approvedAt: '2025-05-19T10:00:00Z',
-        website: 'https://lnct.ac.in',
-      } : null,
-    });
+
+    try {
+      // ── Step 1: keccak256 hash the file ──
+      const buffer = await file.arrayBuffer();
+      const bytes = new Uint8Array(buffer);
+      const docHash = ethers.keccak256(bytes); // bytes32 hex string
+
+      // ── Step 2: Query on-chain documentIndex(docHash) ──
+      // documentIndex returns the batchId (uint256); 0 means not found
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const contract = new ethers.Contract(
+        TruestampContract.address,
+        TruestampContract.abi,
+        provider  // read-only call — provider is fine here
+      );
+
+      const batchIdBN = await contract.documentIndex(docHash);
+      const batchId = batchIdBN.toString();
+      const verified = batchId !== '0';
+
+      let issuer = null;
+      if (verified) {
+        // ── Step 3: Fetch batch info + authority metadata for the issuer ──
+        try {
+          const batch = await contract.getBatchInfo(batchIdBN);
+          const authInfo = await contract.authorities(batch.issuer);
+          issuer = {
+            walletAddress: batch.issuer,
+            orgName: authInfo.name || 'Unknown Authority',
+            department: authInfo.department || '',
+            approvedAt: authInfo.ts
+              ? new Date(Number(authInfo.ts) * 1000).toISOString()
+              : null,
+            website: null,
+          };
+        } catch (metaErr) {
+          console.warn('Could not fetch issuer metadata:', metaErr.message);
+        }
+      }
+
+      onVerify?.({ verified, file, hash: docHash, batchId: verified ? batchId : null, issuer });
+
+    } catch (err) {
+      console.error('Verification failed:', err);
+      // Surface a clear failure to the parent
+      onVerify?.({
+        verified: false,
+        file,
+        hash: null,
+        batchId: null,
+        issuer: null,
+        error: err?.reason || err?.shortMessage || err?.message || 'Verification error',
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const clear = () => setFile(null);
@@ -117,7 +158,7 @@ export default function DropZone({ onVerify }) {
       {loading && (
         <div className="glass-card border border-brand-500/20 rounded-2xl p-6 text-center">
           <div className="flex justify-center gap-4 text-sm text-white/50">
-            {['Hashing document', 'Querying on-chain index', 'Validating Merkle proof'].map((step, i) => (
+            {['Hashing document', 'Querying on-chain index', 'Validating Merkle proof'].map((step) => (
               <div key={step} className="flex items-center gap-1.5">
                 <LoadingSpinner size="sm" className="opacity-60" />
                 {step}

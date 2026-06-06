@@ -1,6 +1,7 @@
 import './globals.css';
 import { ThemeProvider } from '../src/providers/ThemeProvider';
 import { Web3Provider } from '../src/providers/Web3Provider';
+import { AuthProvider } from '../src/providers/AuthProvider';
 import Navbar from '../src/components/layout/Navbar';
 import Footer from '../src/components/layout/Footer';
 import TransactionStatus from '../src/components/shared/TransactionStatus';
@@ -31,20 +32,22 @@ export default function RootLayout({ children }) {
       </head>
       <body className="bg-[#080312] text-white antialiased min-h-screen">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-          <Web3Provider>
-            <div className="relative flex flex-col min-h-screen">
-              {/* Grid background */}
-              <div className="fixed inset-0 grid-bg opacity-100 pointer-events-none" />
-              {/* Hero glow */}
-              <div className="fixed inset-0 bg-hero-glow pointer-events-none" />
-              <Navbar />
-              <main className="flex-1 relative z-10">
-                {children}
-              </main>
-              <Footer />
-              <TransactionStatus />
-            </div>
-          </Web3Provider>
+          <AuthProvider>
+            <Web3Provider>
+              <div className="relative flex flex-col min-h-screen">
+                {/* Grid background */}
+                <div className="fixed inset-0 grid-bg opacity-100 pointer-events-none" />
+                {/* Hero glow */}
+                <div className="fixed inset-0 bg-hero-glow pointer-events-none" />
+                <Navbar />
+                <main className="flex-1 relative z-10">
+                  {children}
+                </main>
+                <Footer />
+                <TransactionStatus />
+              </div>
+            </Web3Provider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

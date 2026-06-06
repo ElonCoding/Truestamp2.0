@@ -2,7 +2,9 @@
 
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { ArrowRight, Shield, Zap, Globe } from 'lucide-react';
+import { ArrowRight, Shield, Zap, Globe, LayoutDashboard } from 'lucide-react';
+import { useAuth } from '../../providers/AuthProvider';
+import { useWeb3 } from '../../providers/Web3Provider';
 
 const HeroCanvas = dynamic(() => import('./HeroCanvas'), {
   ssr: false,
@@ -20,6 +22,14 @@ const stats = [
 ];
 
 export default function Hero() {
+  const { user } = useAuth();
+  const { isConnected, role } = useWeb3();
+
+  const hasSession = isConnected || !!user;
+
+  // Resolve target dashboard route based on user roles
+  const dashboardRoute = role === 'admin' ? '/admin' : (role === 'authority' ? '/authority' : '/dashboard');
+
   return (
     <section className="relative min-h-[calc(100vh-4rem)] flex items-center overflow-hidden">
       {/* 3D Canvas — right side */}
@@ -54,13 +64,21 @@ export default function Hero() {
 
           {/* CTAs */}
           <div className="flex flex-wrap gap-4 mb-16">
-            <Link href="/verify" id="hero-cta-verify" className="btn-primary flex items-center gap-2 text-base">
-              <Shield size={18} />
+            {hasSession ? (
+              <Link href={dashboardRoute} id="hero-cta-dashboard" className="btn-primary flex items-center gap-2 text-base">
+                <LayoutDashboard size={18} />
+                Go to Dashboard
+                <ArrowRight size={16} />
+              </Link>
+            ) : (
+              <Link href="/login" id="hero-cta-login" className="btn-primary flex items-center gap-2 text-base">
+                <Shield size={18} />
+                Get Started / Connect
+                <ArrowRight size={16} />
+              </Link>
+            )}
+            <Link href="/verify" id="hero-cta-verify" className="btn-ghost flex items-center gap-2 text-base">
               Verify a Document
-              <ArrowRight size={16} />
-            </Link>
-            <Link href="/onboard" id="hero-cta-onboard" className="btn-ghost flex items-center gap-2 text-base">
-              Join as Authority
             </Link>
           </div>
 

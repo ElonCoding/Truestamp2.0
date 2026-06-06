@@ -5,9 +5,13 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import WalletButton from '../shared/WalletButton';
 import { useWeb3 } from '../../providers/Web3Provider';
-import { Shield, Building2, Search, LayoutDashboard, Menu, X, Zap } from 'lucide-react';
+import { useAuth } from '../../providers/AuthProvider';
+import { Shield, Building2, Search, LayoutDashboard, Menu, X, Zap, LogOut } from 'lucide-react';
 
 const navLinks = {
+  guest: [
+    { href: '/verify', label: 'Verify', icon: Search },
+  ],
   user: [
     { href: '/verify', label: 'Verify', icon: Search },
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -29,6 +33,7 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { role, isConnected } = useWeb3();
+  const { user, logout } = useAuth();
   const pathname = usePathname();
 
   useEffect(() => {
@@ -37,7 +42,9 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handler);
   }, []);
 
-  const links = navLinks[role] ?? navLinks.user;
+  const hasUserSession = isConnected || !!user;
+  const activeRole = role !== 'user' ? role : (hasUserSession ? 'user' : 'guest');
+  const links = navLinks[activeRole] ?? navLinks.guest;
 
   return (
     <>
@@ -93,7 +100,53 @@ export default function Navbar() {
                 Admin
               </span>
             )}
+            
             <WalletButton />
+
+            {/* Email user avatar/dropdown */}
+            {user && (
+              <div className="relative group">
+                <button className="flex items-center gap-2 glass-card px-3.5 py-2 rounded-xl border border-white/10 hover:border-brand-500/30 transition-all duration-200 text-sm font-medium">
+                  {user.photoURL ? (
+                    <img src={user.photoURL} alt="Avatar" className="w-5 h-5 rounded-full border border-white/20" />
+                  ) : (
+                    <div className="w-5 h-5 rounded-full bg-brand-500/30 flex items-center justify-center text-[10px] text-brand-300 font-bold uppercase">
+                      {user.displayName?.slice(0, 2)}
+                    </div>
+                  )}
+                  <span className="text-white/80 hidden lg:inline max-w-[100px] truncate">{user.displayName}</span>
+                </button>
+                
+                {/* Dropdown menu */}
+                <div className="absolute right-0 top-full mt-2 w-48 glass-card border border-white/10 rounded-xl shadow-2xl shadow-black/50 z-50 overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                  <div className="p-3 border-b border-white/10 text-xs">
+                    <p className="text-white/40">Logged in as</p>
+                    <p className="text-white/80 truncate font-mono mt-0.5">{user.email}</p>
+                  </div>
+                  <div className="p-1">
+                    <button
+                      onClick={logout}
+                      className="flex items-center gap-2 w-full px-3 py-2 rounded-lg hover:bg-red-500/10 text-xs text-red-400 hover:text-red-300 transition-colors"
+                    >
+                      <LogOut size={13} />
+                      Sign Out
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Sign In button if unauthenticated */}
+            {!isConnected && !user && (
+              <Link
+                href="/login"
+                className="btn-primary py-2.5 px-4 rounded-xl text-xs font-semibold shadow-lg shadow-brand-500/10"
+                id="navbar-signin-btn"
+              >
+                Sign In
+              </Link>
+            )}
+
             {/* Mobile toggle */}
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
