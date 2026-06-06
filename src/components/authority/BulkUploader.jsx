@@ -87,8 +87,11 @@ export default function BulkUploader({ onBatchComplete }) {
     try {
       if (!window.ethereum) throw new Error('MetaMask not found. Install MetaMask to submit on-chain.');
 
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner(); // ← signer required for write tx
+      const readProvider = new ethers.JsonRpcProvider(
+        process.env.REACT_APP_ALCHEMY_RPC_URL
+      )
+      const writeProvider = new ethers.BrowserProvider(window.ethereum)
+      const signer = await writeProvider.getSigner(); // ← signer required for write tx
 
       const contract = new ethers.Contract(
         TruestampContract.address,

@@ -21,11 +21,15 @@ async function resolveRole(account) {
     return 'admin';
   }
   try {
-    const provider = new ethers.BrowserProvider(window.ethereum);
+    const readProvider = new ethers.JsonRpcProvider(
+      process.env.REACT_APP_ALCHEMY_RPC_URL
+    )
+    const writeProvider = new ethers.BrowserProvider(window.ethereum)
+    const signer = await writeProvider.getSigner()
     const contract = new ethers.Contract(
       TruestampContract.address,
       TruestampContract.abi,
-      provider
+      readProvider
     );
     // Fetch ISSUER_ROLE bytes32 from contract, then check hasRole
     const issuerRole = await contract.ISSUER_ROLE();

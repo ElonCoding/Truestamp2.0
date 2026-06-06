@@ -38,11 +38,15 @@ export default function DropZone({ onVerify }) {
 
       // ── Step 2: Query on-chain documentIndex(docHash) ──
       // documentIndex returns the batchId (uint256); 0 means not found
-      const provider = new ethers.BrowserProvider(window.ethereum);
+      const readProvider = new ethers.JsonRpcProvider(
+        process.env.REACT_APP_ALCHEMY_RPC_URL
+      )
+      const writeProvider = new ethers.BrowserProvider(window.ethereum)
+      const signer = await writeProvider.getSigner()
       const contract = new ethers.Contract(
         TruestampContract.address,
         TruestampContract.abi,
-        provider  // read-only call — provider is fine here
+        readProvider  // read-only call — provider is fine here
       );
 
       const batchIdBN = await contract.documentIndex(docHash);
