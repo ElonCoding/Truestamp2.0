@@ -1,8 +1,8 @@
 'use client';
 
-import Sidebar from '../../../../../src/components/layout/Sidebar';
-import RoleGuard from '../../../../../src/components/shared/RoleGuard';
-import StatusBadge from '../../../../../src/components/shared/StatusBadge';
+import Sidebar from '../../../../src/components/layout/Sidebar';
+import RoleGuard from '../../../../src/components/shared/RoleGuard';
+import StatusBadge from '../../../../src/components/shared/StatusBadge';
 import { ArrowLeft, FileText, Hash, ExternalLink, Copy } from 'lucide-react';
 import Link from 'next/link';
 

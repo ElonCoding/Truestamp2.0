@@ -50,7 +50,7 @@ export default function WalletSetup() {
             href={link}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-3 p-4 rounded-xl bg-white/5 border border-white/10 hover:border-brand-500/30 hover:bg-white/8 transition-all duration-200 group"
+            className="flex items-center gap-3 p-4 rounded-xl bg-white/5 border border-white/10 hover:border-brand-500/30 hover:bg-white/10 transition-all duration-200 group"
           >
             <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center flex-shrink-0`}>
               <Download size={16} className="text-white" />
