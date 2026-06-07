@@ -1,9 +1,89 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import DropZone from '../../src/components/verify/DropZone';
 import VerificationResult from '../../src/components/verify/VerificationResult';
-import { Shield, Zap, Lock } from 'lucide-react';
+import { Shield, Zap, Lock, Loader2 } from 'lucide-react';
+
+function VerifyContent({ result, setResult }) {
+  const searchParams = useSearchParams();
+  const hashParam = searchParams.get('hash');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!hashParam) return;
+    
+    setLoading(true);
+    setError('');
+    
+    fetch('/api/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ hash: hashParam }),
+    })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error('Verification request failed');
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (data.verified) {
+          setResult({
+            verified: true,
+            hash: hashParam,
+            batchId: data.batchId,
+            issuer: data.issuer,
+            file: data.file,
+            txHash: data.txHash
+          });
+        } else {
+          setResult({
+            verified: false,
+            hash: hashParam,
+            file: { name: 'Direct URL Query' },
+          });
+        }
+      })
+      .catch((err) => {
+        console.error('API Verification error:', err);
+        setError('Failed to contact verification server');
+      })
+      .finally(() => setLoading(false));
+  }, [hashParam, setResult]);
+
+  if (loading) {
+    return (
+      <div className="glass-card border border-brand-500/20 rounded-3xl p-12 text-center verified-glow">
+        <Loader2 className="w-16 h-16 text-brand-400 animate-spin mx-auto mb-6" />
+        <h3 className="text-xl font-bold text-white mb-2">Verifying Document Hash</h3>
+        <p className="text-brand-400 font-mono text-sm break-all max-w-md mx-auto mb-4">{hashParam}</p>
+        <p className="text-white/40 text-xs">Querying Polygon Amoy Testnet & IPFS registry...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="glass-card border border-red-500/20 rounded-3xl p-12 text-center error-glow">
+        <p className="text-red-400 font-bold mb-2">Verification Error</p>
+        <p className="text-white/60 mb-6">{error}</p>
+        <button onClick={() => window.location.href = '/verify'} className="btn-primary">Try Again</button>
+      </div>
+    );
+  }
+
+  return !result ? (
+    <DropZone onVerify={setResult} />
+  ) : (
+    <VerificationResult result={result} onReset={() => {
+      setResult(null);
+      window.history.replaceState({}, '', '/verify');
+    }} />
+  );
+}
 
 export default function VerifyPage() {
   const [result, setResult] = useState(null);
@@ -42,11 +122,13 @@ export default function VerifyPage() {
       )}
 
       {/* Main action */}
-      {!result ? (
-        <DropZone onVerify={setResult} />
-      ) : (
-        <VerificationResult result={result} onReset={() => setResult(null)} />
-      )}
+      <Suspense fallback={
+        <div className="flex justify-center py-12">
+          <Loader2 className="w-8 h-8 text-brand-400 animate-spin" />
+        </div>
+      }>
+        <VerifyContent result={result} setResult={setResult} />
+      </Suspense>
     </div>
   );
 }

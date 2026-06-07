@@ -5,18 +5,17 @@ import path from 'path';
 
 let db = null;
 
-// Helper to get local JSON database path
-function getLocalDbPath() {
+// ─── Local JSON helpers ─────────────────────────────────────────────────────
+
+function getLocalPath(name) {
   const dir = path.join(process.cwd(), 'data');
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-  return path.join(dir, 'applications.json');
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  return path.join(dir, name);
 }
 
 // Read from local JSON fallback
 export function getLocalApplications() {
-  const filePath = getLocalDbPath();
+  const filePath = getLocalPath('applications.json');
   if (!fs.existsSync(filePath)) {
     // Return initial mock applications if file doesn't exist yet
     const initial = [
@@ -39,12 +38,39 @@ export function getLocalApplications() {
 
 // Write to local JSON fallback
 export function saveLocalApplications(apps) {
-  const filePath = getLocalDbPath();
+  const filePath = getLocalPath('applications.json');
   try {
     fs.writeFileSync(filePath, JSON.stringify(apps, null, 2), 'utf-8');
     return true;
   } catch (e) {
-    console.error('Error writing local db:', e);
+    console.error('Error writing local applications db:', e);
+    return false;
+  }
+}
+
+// ─── Batches local JSON ────────────────────────────────────────────────────
+
+export function getLocalBatches() {
+  const filePath = getLocalPath('batches.json');
+  if (!fs.existsSync(filePath)) {
+    fs.writeFileSync(filePath, JSON.stringify([], null, 2), 'utf-8');
+    return [];
+  }
+  try {
+    return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+  } catch (e) {
+    console.error('Error reading local batches db:', e);
+    return [];
+  }
+}
+
+export function saveLocalBatches(batches) {
+  const filePath = getLocalPath('batches.json');
+  try {
+    fs.writeFileSync(filePath, JSON.stringify(batches, null, 2), 'utf-8');
+    return true;
+  } catch (e) {
+    console.error('Error writing local batches db:', e);
     return false;
   }
 }

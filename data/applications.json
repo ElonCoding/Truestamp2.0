@@ -59,8 +59,10 @@
     "members": [],
     "chainId": 80002,
     "network": "Polygon Amoy Testnet",
-    "status": "pending",
+    "status": "approved",
     "emailVerified": true,
-    "submittedAt": "2026-06-06T14:18:53.053Z"
+    "submittedAt": "2026-06-06T14:18:53.053Z",
+    "txHash": "0xa457417e3d52f57d1ac091d94c7ba72857179e75a76b73bfa09c03248c2fbab8",
+    "updatedAt": "2026-06-06T22:36:46.204Z"
   }
 ]

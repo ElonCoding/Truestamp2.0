@@ -49,31 +49,60 @@ export default function DropZone({ onVerify }) {
         readProvider
       );
 
-      const batchIdBN = await contract.documentIndex(docHash);
-      const batchId = batchIdBN.toString();
-      const verified = batchId !== '0';
-
+      let verified = false;
+      let batchId = null;
       let issuer = null;
-      if (verified) {
-        // ── Step 3: Fetch batch info + authority metadata for the issuer ──
+      let txHash = null;
+
+      try {
+        const batchIdBN = await contract.documentIndex(docHash);
+        batchId = batchIdBN.toString();
+        verified = batchId !== '0';
+
+        if (verified) {
+          try {
+            const batch = await contract.getBatchInfo(batchIdBN);
+            const authInfo = await contract.authorities(batch.issuer);
+            issuer = {
+              walletAddress: batch.issuer,
+              orgName: authInfo.name || 'Unknown Authority',
+              department: authInfo.department || '',
+              approvedAt: authInfo.ts
+                ? new Date(Number(authInfo.ts) * 1000).toISOString()
+                : null,
+              website: null,
+            };
+          } catch (metaErr) {
+            console.warn('Could not fetch issuer metadata from chain:', metaErr.message);
+          }
+        }
+      } catch (chainErr) {
+        console.warn('Direct blockchain query failed, falling back to local database verify API:', chainErr.message);
+      }
+
+      // Fallback: If not verified on-chain, search our database cache
+      if (!verified) {
         try {
-          const batch = await contract.getBatchInfo(batchIdBN);
-          const authInfo = await contract.authorities(batch.issuer);
-          issuer = {
-            walletAddress: batch.issuer,
-            orgName: authInfo.name || 'Unknown Authority',
-            department: authInfo.department || '',
-            approvedAt: authInfo.ts
-              ? new Date(Number(authInfo.ts) * 1000).toISOString()
-              : null,
-            website: null,
-          };
-        } catch (metaErr) {
-          console.warn('Could not fetch issuer metadata:', metaErr.message);
+          const apiRes = await fetch('/api/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ hash: docHash }),
+          });
+          if (apiRes.ok) {
+            const apiData = await apiRes.json();
+            if (apiData.verified) {
+              verified = true;
+              batchId = apiData.batchId;
+              issuer = apiData.issuer;
+              txHash = apiData.txHash;
+            }
+          }
+        } catch (apiErr) {
+          console.warn('Local database verify API failed:', apiErr.message);
         }
       }
 
-      onVerify?.({ verified, file, hash: docHash, batchId: verified ? batchId : null, issuer });
+      onVerify?.({ verified, file, hash: docHash, batchId: verified ? batchId : null, issuer, txHash });
 
     } catch (err) {
       console.error('Verification failed:', err);

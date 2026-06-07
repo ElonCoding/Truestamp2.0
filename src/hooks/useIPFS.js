@@ -1,31 +1,44 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { uploadToLighthouse } from '../lib/ipfsUtils';
 
-// Placeholder hook for uploading files to Lighthouse IPFS
+/**
+ * useIPFS — real Lighthouse IPFS upload hook
+ *
+ * Usage:
+ *   const { uploading, progress, uploadFiles, error } = useIPFS();
+ *   const result = await uploadFiles(filesArray);
+ *   // result: { cid, name, size } | throws on failure
+ */
 export function useIPFS() {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [error, setError] = useState(null);
 
-  const uploadFiles = async (files) => {
+  const uploadFiles = useCallback(async (files) => {
     setUploading(true);
     setProgress(0);
-    
-    // Simulate chunked upload
-    for (let i = 0; i <= 100; i += 10) {
-      await new Promise(r => setTimeout(r, 200));
-      setProgress(i);
+    setError(null);
+
+    try {
+      const result = await uploadToLighthouse(files, (pct) => {
+        setProgress(pct);
+      });
+      setProgress(100);
+      return result; // { cid, name, size }
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setUploading(false);
     }
-    
-    const mockCID = 'bafybeig' + Math.random().toString(36).slice(2, 32);
-    
-    setUploading(false);
-    return { cid: mockCID };
-  };
+  }, []);
 
   return {
     uploading,
     progress,
-    uploadFiles
+    error,
+    uploadFiles,
   };
 }
