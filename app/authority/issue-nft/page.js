@@ -7,13 +7,12 @@ import { Award, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import Sidebar from '../../../src/components/layout/Sidebar';
 import RoleGuard from '../../../src/components/shared/RoleGuard';
 import SoulboundNFT from '../../../src/lib/SoulboundNFT.json';
-import { uploadFileToIPFS, uploadMetadataToIPFS } from '../../../src/lib/lighthouse';
+import { uploadFileToIPFS } from '../../../src/lib/lighthouse';
 import { CONSTANTS } from '../../../src/lib/constants';
 
 const STEPS = [
   'Uploading certificate to IPFS…',
-  'Building metadata…',
-  'Uploading metadata to IPFS…',
+  'Encoding metadata…',
   'Connecting MetaMask…',
   'Awaiting MetaMask confirmation…',
   'Minting Soulbound NFT…',
@@ -43,35 +42,37 @@ export default function IssueNFTPage() {
       if (!ethers.isAddress(studentAddress)) throw new Error('Invalid wallet address');
       if (!file) throw new Error('Please upload a PDF certificate');
 
-      // ── STEP 0 ── Upload PDF ──────────────────────────────────────
+      // ── STEP 0 ── Upload PDF to IPFS ─────────────────────────────
       step(0);
       const fileIpfsUrl = await uploadFileToIPFS(file);
+      // fileIpfsUrl is already "ipfs://<CID>" from the proxy
+      const pdfCID = fileIpfsUrl.replace('ipfs://', '');
 
-      // ── STEP 1 ── Build metadata ──────────────────────────────────
+      // ── STEP 1 ── Encode metadata as base64 data URI ──────────────
+      // Bypasses Lighthouse JSON upload entirely — no network call needed.
       step(1);
       const issuedAt = new Date().toISOString();
       const metadata = {
         name: `TrueStamp ${certType} Certificate`,
-        description: `Soulbound NFT certificate issued via TrueStamp. Blockchain-verified, non-transferable.`,
-        image: fileIpfsUrl,
+        description: 'Soulbound NFT certificate issued via TrueStamp. Blockchain-verified, non-transferable.',
+        image: `ipfs://${pdfCID}`,
         external_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://truestamp.app'}/verify`,
         attributes: [
-          { trait_type: 'Certificate Type',   value: certType },
-          { trait_type: 'Verification',        value: 'Blockchain Verified' },
-          { trait_type: 'Network',             value: 'Polygon Amoy' },
-          { trait_type: 'Issued To',           value: studentName || studentAddress },
-          { trait_type: 'Issued At',           value: issuedAt },
-          { trait_type: 'Soulbound',           value: 'true' },
-          { trait_type: 'Issuer Platform',     value: 'TrueStamp 2.0' },
+          { trait_type: 'Certificate Type', value: certType },
+          { trait_type: 'Verification',     value: 'Blockchain Verified' },
+          { trait_type: 'Network',          value: 'Polygon Amoy' },
+          { trait_type: 'Issued To',        value: studentName || studentAddress },
+          { trait_type: 'Issued At',        value: issuedAt },
+          { trait_type: 'Soulbound',        value: 'true' },
+          { trait_type: 'Issuer Platform',  value: 'TrueStamp 2.0' },
         ],
       };
+      const jsonString      = JSON.stringify(metadata);
+      const encodedMetadata = btoa(unescape(encodeURIComponent(jsonString))); // UTF-8 safe
+      const tokenURI        = `data:application/json;base64,${encodedMetadata}`;
 
-      // ── STEP 2 ── Upload metadata ─────────────────────────────────
+      // ── STEP 2 ── Connect wallet ──────────────────────────────────
       step(2);
-      const tokenURI = await uploadMetadataToIPFS(metadata);
-
-      // ── STEP 3 ── Connect wallet ──────────────────────────────────
-      step(3);
       if (!window.ethereum) throw new Error('MetaMask not found. Install MetaMask to continue.');
 
       const provider = new ethers.BrowserProvider(window.ethereum);
@@ -88,17 +89,19 @@ export default function IssueNFTPage() {
 
       const signer = await provider.getSigner();
 
-      const contractAddress = process.env.NEXT_PUBLIC_NFT_CONTRACT_ADDRESS;
-      if (!contractAddress) throw new Error('NEXT_PUBLIC_NFT_CONTRACT_ADDRESS not set in .env');
+      // Address hardcoded to bypass stale env-var cache causing Execution Reverted
+      const nftContract = new ethers.Contract(
+        '0xa8a804E2e33f94B01F0806E68dB07AD43041dfCe',
+        SoulboundNFT.abi,
+        signer
+      );
 
-      const contract = new ethers.Contract(contractAddress, SoulboundNFT.abi, signer);
+      // ── STEP 3 ── MetaMask confirm ────────────────────────────────
+      step(3);
+      const tx = await nftContract.issuePremiumCertificate(studentAddress, tokenURI);
 
-      // ── STEP 4 ── MetaMask confirm ────────────────────────────────
+      // ── STEP 4 ── Wait for mine ───────────────────────────────────
       step(4);
-      const tx = await contract.issuePremiumCertificate(studentAddress, tokenURI);
-
-      // ── STEP 5 ── Wait mine ───────────────────────────────────────
-      step(5);
       await tx.wait();
 
       setTxHash(tx.hash);

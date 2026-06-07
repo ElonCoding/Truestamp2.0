@@ -92,14 +92,14 @@ export async function POST(request) {
 
   } catch (err) {
     console.error('[IPFS Proxy] Unexpected error:', err);
-    
+
     // Simulate IPFS upload if Lighthouse is unreachable due to network issues (ECONNRESET, fetch failed)
     if (err.message?.includes('fetch failed') || err.code === 'ECONNRESET' || err.message?.includes('Network') || err.name === 'TypeError') {
       console.warn('[IPFS Proxy] Lighthouse unreachable. Falling back to simulated IPFS upload.');
-      
+
       // Generate a realistic-looking IPFS CID v0
-      const mockHash = 'Qm' + Array.from({length: 44}, () => Math.floor(Math.random()*16).toString(16)).join('');
-      
+      const mockHash = 'Qm' + Array.from({ length: 44 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
+
       return Response.json({
         success: true,
         data: {
