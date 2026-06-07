@@ -121,14 +121,21 @@ export async function hashFiles(files, onProgress) {
  * @param {string[]} hashes - array of 0x-prefixed hex hashes
  * @returns {string} 0x-prefixed Merkle root
  */
-export function buildMerkleRoot(hashes) {
+export async function buildMerkleRoot(hashes) {
   if (!hashes.length) {
     return '0x' + '0'.repeat(64);
   }
 
-  // Lazy import ethers to avoid SSR issues
-  const ethersModule = require('ethers');
-  const { ethers } = ethersModule;
+  // Dynamic ESM import — works in both browser and Node without CJS require()
+  const { ethers } = await import('ethers');
+
+  // Browser-safe Uint8Array comparison (no Node Buffer)
+  function uint8Compare(a, b) {
+    for (let i = 0; i < Math.min(a.length, b.length); i++) {
+      if (a[i] !== b[i]) return a[i] - b[i];
+    }
+    return a.length - b.length;
+  }
 
   let layer = hashes.map(h => ethers.getBytes(h));
   while (layer.length > 1) {
@@ -137,7 +144,7 @@ export function buildMerkleRoot(hashes) {
       const left = layer[i];
       const right = i + 1 < layer.length ? layer[i + 1] : layer[i];
       const sorted =
-        Buffer.compare(left, right) <= 0
+        uint8Compare(left, right) <= 0
           ? ethers.concat([left, right])
           : ethers.concat([right, left]);
       next.push(ethers.getBytes(ethers.keccak256(sorted)));

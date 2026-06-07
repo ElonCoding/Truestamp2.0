@@ -110,7 +110,7 @@ export default function BulkUploader({ onBatchComplete }) {
 
       // Build Merkle root from keccak256 hashes
       const keccakHashes = hashes.map((h) => h.keccak);
-      const merkleRoot = buildMerkleRoot(keccakHashes);
+      const merkleRoot = await buildMerkleRoot(keccakHashes);
 
       // ── Stage 1: Upload files to IPFS via Lighthouse ──────────────────────
       setStage(1);

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, Upload, Layers, Settings,
-  ChevronRight, Zap, Building2, Shield, Users,
+  ChevronRight, Zap, Building2, Shield, Users, Award,
 } from 'lucide-react';
 
 const sidebarSections = {
@@ -15,6 +15,7 @@ const sidebarSections = {
       { href: '/authority', label: 'Dashboard', icon: LayoutDashboard },
       { href: '/authority/upload', label: 'Bulk Upload', icon: Upload },
       { href: '/authority/batches', label: 'Batch History', icon: Layers },
+      { href: '/authority/issue-nft', label: 'Issue NFT', icon: Award },
     ],
   },
   admin: {
