@@ -8,6 +8,8 @@ import CipherReveal from '../motion/CipherReveal';
 import Parallax from '../motion/Parallax';
 import HeroAsciiVisual from './HeroAsciiVisual';
 
+import ConnectWalletButton from '../shared/ConnectWalletButton';
+
 export default function EvervaultHero() {
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -74,14 +76,9 @@ export default function EvervaultHero() {
             <Link href="/verify" className="text-slate-400 hover:text-white transition-colors">Docs</Link>
           </nav>
 
-          {/* Right Action Buttons */}
-          <div className="flex items-center gap-5">
-            <Link href="/login" className="text-xs font-medium text-slate-400 hover:text-white transition-colors hidden sm:inline-block">
-              Log in
-            </Link>
-            <Link href="/verify" className="px-5 py-2 rounded-full bg-white text-black font-semibold text-xs hover:bg-slate-200 hover:scale-105 active:scale-95 transition-all shadow-sm">
-              Get started
-            </Link>
+          {/* Right Action: Web3 Connect Wallet Button */}
+          <div className="flex items-center gap-3">
+            <ConnectWalletButton />
           </div>
         </motion.header>
 

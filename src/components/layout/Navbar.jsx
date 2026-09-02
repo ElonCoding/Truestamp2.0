@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Shield, Search, LayoutDashboard, Menu, X, ArrowUpRight, Layers, FileText, Activity } from 'lucide-react';
 
+import ConnectWalletButton from '../shared/ConnectWalletButton';
+
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -60,20 +62,9 @@ export default function Navbar() {
             })}
           </nav>
 
-          {/* Right Action Buttons */}
-          <div className="flex items-center gap-4">
-            <Link
-              href="/login"
-              className="text-xs font-medium text-slate-400 hover:text-white transition-colors hidden sm:inline-block"
-            >
-              Log in
-            </Link>
-            <Link
-              href="/verify"
-              className="btn-white text-xs px-4 py-2 font-medium"
-            >
-              Launch Studio
-            </Link>
+          {/* Right Action: Web3 Connect Wallet Button */}
+          <div className="flex items-center gap-3">
+            <ConnectWalletButton />
 
             {/* Mobile toggle */}
             <button
