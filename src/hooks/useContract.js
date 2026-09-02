@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { ethers } from 'ethers';
-import { TruestampContract } from '../lib/contract';
+import { TruestampContract, getAmoyFeeOptions, parseContractError } from '../lib/contract';
 import { CONSTANTS } from '../lib/constants';
 
 // Shared helper — get a read-only provider (no wallet needed)
@@ -13,17 +13,18 @@ function getReadProvider() {
 }
 
 // Shared helper — get a write provider + signer from MetaMask
-async function getWriteSigner() {
+async function getWriteSignerAndProvider() {
   if (!window.ethereum) throw new Error('MetaMask not found. Please install MetaMask.');
   const writeProvider = new ethers.BrowserProvider(window.ethereum);
-  return writeProvider.getSigner();
+  const signer = await writeProvider.getSigner();
+  return { signer, writeProvider };
 }
 
 /**
  * useContract — real on-chain interactions via ethers v6
  *
  * All write functions auto-ensure the user is on the correct network
- * before sending a transaction.
+ * and inject EIP-1559 gas fee parameters compliant with Polygon Amoy.
  */
 export function useContract() {
   const [loading, setLoading] = useState(false);
@@ -68,14 +69,15 @@ export function useContract() {
     setTxHash(null);
     try {
       await ensureCorrectNetwork();
-      const signer = await getWriteSigner();
+      const { signer, writeProvider } = await getWriteSignerAndProvider();
+      const feeOptions = await getAmoyFeeOptions(writeProvider);
       const contract = new ethers.Contract(TruestampContract.address, TruestampContract.abi, signer);
-      const tx = await contract.whitelistAuthority(address, name, dept, ipfsCID);
+      const tx = await contract.whitelistAuthority(address, name, dept, ipfsCID, feeOptions);
       const receipt = await tx.wait();
       setTxHash(receipt.hash);
       return { success: true, txHash: receipt.hash };
     } catch (err) {
-      const msg = err?.reason || err?.shortMessage || err?.message || 'Transaction failed';
+      const msg = parseContractError(err, 'Whitelisting transaction failed');
       setError(msg);
       return { success: false, error: msg };
     } finally {
@@ -95,9 +97,10 @@ export function useContract() {
     setTxHash(null);
     try {
       await ensureCorrectNetwork();
-      const signer = await getWriteSigner();
+      const { signer, writeProvider } = await getWriteSignerAndProvider();
+      const feeOptions = await getAmoyFeeOptions(writeProvider);
       const contract = new ethers.Contract(TruestampContract.address, TruestampContract.abi, signer);
-      const tx = await contract.submitBatch(merkleRoot, ipfsCID, docCount);
+      const tx = await contract.submitBatch(merkleRoot, ipfsCID, docCount, feeOptions);
       const receipt = await tx.wait();
 
       // Parse BatchSubmitted event to get batchId
@@ -114,7 +117,7 @@ export function useContract() {
       setTxHash(receipt.hash);
       return { success: true, txHash: receipt.hash, batchId };
     } catch (err) {
-      const msg = err?.reason || err?.shortMessage || err?.message || 'Transaction failed';
+      const msg = parseContractError(err, 'Submit batch transaction failed');
       setError(msg);
       return { success: false, error: msg };
     } finally {
@@ -152,7 +155,7 @@ export function useContract() {
 
       return { verified, batchId: verified ? batchId : null, issuer };
     } catch (err) {
-      const msg = err?.reason || err?.shortMessage || err?.message || 'Verification error';
+      const msg = parseContractError(err, 'Verification error');
       setError(msg);
       return { verified: false, error: msg };
     } finally {
@@ -170,14 +173,15 @@ export function useContract() {
     setTxHash(null);
     try {
       await ensureCorrectNetwork();
-      const signer = await getWriteSigner();
+      const { signer, writeProvider } = await getWriteSignerAndProvider();
+      const feeOptions = await getAmoyFeeOptions(writeProvider);
       const contract = new ethers.Contract(TruestampContract.address, TruestampContract.abi, signer);
-      const tx = await contract.revokeAuthority(address);
+      const tx = await contract.revokeAuthority(address, feeOptions);
       const receipt = await tx.wait();
       setTxHash(receipt.hash);
       return { success: true, txHash: receipt.hash };
     } catch (err) {
-      const msg = err?.reason || err?.shortMessage || err?.message || 'Revoke failed';
+      const msg = parseContractError(err, 'Revoke failed');
       setError(msg);
       return { success: false, error: msg };
     } finally {

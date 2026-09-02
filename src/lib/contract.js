@@ -1,3 +1,58 @@
+import { ethers } from 'ethers';
+
+// Helper to compute Polygon Amoy compliant EIP-1559 gas fee parameters.
+// Polygon Amoy hard-enforces a minimum tip cap (maxPriorityFeePerGas) of 25 Gwei.
+export async function getAmoyFeeOptions(provider) {
+  const minTip = ethers.parseUnits('30', 'gwei'); // Safe margin above 25 Gwei Amoy minimum
+  try {
+    const feeData = await provider.getFeeData();
+    let maxPriorityFeePerGas = feeData.maxPriorityFeePerGas || minTip;
+    if (maxPriorityFeePerGas < minTip) {
+      maxPriorityFeePerGas = minTip;
+    }
+    let maxFeePerGas = feeData.maxFeePerGas || (maxPriorityFeePerGas + ethers.parseUnits('15', 'gwei'));
+    if (maxFeePerGas < maxPriorityFeePerGas) {
+      maxFeePerGas = maxPriorityFeePerGas + ethers.parseUnits('15', 'gwei');
+    }
+    return { maxPriorityFeePerGas, maxFeePerGas };
+  } catch {
+    return {
+      maxPriorityFeePerGas: minTip,
+      maxFeePerGas: minTip + ethers.parseUnits('20', 'gwei'),
+    };
+  }
+}
+
+// Helper to safely extract meaningful errors from ethers v6 and RPC errors
+export function parseContractError(err, defaultMsg = 'Transaction failed') {
+  let msg = err?.reason || err?.shortMessage || err?.message || defaultMsg;
+
+  // Handle ethers v6 "could not coalesce error" / inner RPC errors
+  if (msg.includes('could not coalesce error') || err?.info?.error?.message || err?.error?.message) {
+    const innerMsg = err?.info?.error?.message || err?.error?.message;
+    if (innerMsg) {
+      msg = innerMsg;
+    }
+  }
+
+  // Detect AccessControl reverts or insufficient gas/tip
+  const revertData = err?.data || err?.info?.error?.data || err?.error?.data;
+  if (typeof revertData === 'string' && (revertData.startsWith('0xe2517d3f') || revertData.includes('AccessControl'))) {
+    return 'Access Denied: Wallet unauthorized for this action. Contact administrator to whitelist.';
+  }
+  if (msg.includes('gas price below minimum') || msg.includes('gas tip cap')) {
+    return 'Gas tip cap too low for Polygon network. Retrying with higher priority fee.';
+  }
+  if (msg.includes('user rejected') || msg.includes('ACTION_REJECTED')) {
+    return 'Transaction was rejected by user in MetaMask.';
+  }
+  if (msg.includes('insufficient funds')) {
+    return 'Insufficient MATIC balance in wallet to pay for transaction gas.';
+  }
+
+  return msg;
+}
+
 // contract instance helpers
 export const TruestampContract = {
   address: process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '0x13C5ebdaC5fa97ee26a07E7D3C0b0f6eEc2A2F3d',
