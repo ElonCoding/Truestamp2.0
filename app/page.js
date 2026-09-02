@@ -1,6 +1,6 @@
 import EvervaultHero from '../src/components/landing/EvervaultHero';
 import TrustChainRow from '../src/components/landing/TrustChainRow';
-import HeroTraceCard from '../src/components/landing/HeroTraceCard';
+import HeroFeatureCard from '../src/components/landing/HeroFeatureCard';
 import EncryptSection from '../src/components/landing/EncryptSection';
 import ProcessSection from '../src/components/landing/ProcessSection';
 import ShareSection from '../src/components/landing/ShareSection';
@@ -29,7 +29,7 @@ export default function HomePage() {
         </SectionTransition>
 
         <SectionTransition>
-          <HeroTraceCard />
+          <HeroFeatureCard />
         </SectionTransition>
 
         <SectionTransition>

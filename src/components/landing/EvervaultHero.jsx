@@ -7,7 +7,6 @@ import TextReveal from '../motion/TextReveal';
 import CipherReveal from '../motion/CipherReveal';
 import Parallax from '../motion/Parallax';
 import HeroAsciiVisual from './HeroAsciiVisual';
-
 import ConnectWalletButton from '../shared/ConnectWalletButton';
 
 export default function EvervaultHero() {
@@ -137,7 +136,7 @@ export default function EvervaultHero() {
                   href="/verify" 
                   className="px-6 py-2.5 rounded-full bg-white/[0.08] hover:bg-white/[0.14] hover:scale-105 border border-white/[0.12] text-white font-medium text-xs sm:text-sm transition-all active:scale-95 flex items-center gap-1.5"
                 >
-                  <span>Launch Trace Studio</span>
+                  <span>Explore Platform</span>
                   <span>→</span>
                 </Link>
               </motion.div>

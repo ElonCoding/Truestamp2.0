@@ -25,16 +25,16 @@ export default function CtaSection() {
           >
             <div className="max-w-2xl mx-auto space-y-6 relative z-20">
               
-              {/* Main Headline */}
+              {/* Main Headline (Exact Current Evervault Copy) */}
               <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-white leading-[1.08]">
-                <ShinyText text="Trace, Attribute," speed={3} color="#ffffff" shineColor="#f8fafc" /> <br />
-                <ShinyText text="Enforce." speed={3} color="#ffffff" shineColor="#f8fafc" />
+                <ShinyText text="Encrypt, Process," speed={3} color="#ffffff" shineColor="#f8fafc" /> <br />
+                <ShinyText text="Share." speed={3} color="#ffffff" shineColor="#f8fafc" />
               </h2>
 
-              {/* Subtitle */}
+              {/* Subtitle (Exact Current Evervault Copy) */}
               <p className="text-slate-200 text-xs sm:text-sm md:text-base leading-relaxed font-normal opacity-90 max-w-lg mx-auto">
                 <ShinyText 
-                  text="The national blockchain intelligence platform for investigators who need to recover digital assets faster." 
+                  text="The encryption platform for developers who have better ways to spend their time." 
                   speed={4} 
                   color="#e2e8f0" 
                   shineColor="#ffffff" 
@@ -47,7 +47,7 @@ export default function CtaSection() {
                   href="/verify" 
                   className="px-6 py-2.5 rounded-full bg-white text-black font-semibold text-xs sm:text-sm hover:bg-slate-200 hover:scale-105 active:scale-95 transition-all shadow-lg inline-block"
                 >
-                  Launch Investigation
+                  Get started
                 </Link>
               </div>
 

@@ -10,7 +10,7 @@ export default function TestimonialSection() {
 
   const testimonials = [
     {
-      quote: "Being able to trace unhosted multi-hop crypto flows and attribute them to exchange deposit addresses in seconds has cut FIR resolution time by 90%.",
+      quote: "Being able to process sensitive customer data without touching it in plaintext is an absolute game-changer.",
       author: "Arnav Choksey",
       role: "Co-Founder & Chief Architect",
       icon: (
@@ -28,7 +28,7 @@ export default function TestimonialSection() {
       ),
     },
     {
-      quote: "Automating Section 91 CrPC notice dispatch directly to VASP compliance desks prevents suspect funds from being liquidated off-chain.",
+      quote: "Evervault sets a whole new standard for zero-trust data privacy, serverless cages, and hardware-level isolation.",
       author: "Dhruv",
       role: "Lead Blockchain Engineer",
       icon: (
@@ -39,7 +39,7 @@ export default function TestimonialSection() {
       ),
     },
     {
-      quote: "Unified multi-chain graph traversal across Bitcoin, Ethereum, and Tron gives our forensic teams court-admissible cryptographic evidence.",
+      quote: "Compliance and confidential computing went from a multi-month blocker to a seamless 10-minute setup.",
       author: "Akshat",
       role: "Head of Security & Intelligence Systems",
       icon: (

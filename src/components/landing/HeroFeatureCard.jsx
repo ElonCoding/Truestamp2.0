@@ -7,7 +7,7 @@ import TextReveal from '../motion/TextReveal';
 import ScrollReveal from '../motion/ScrollReveal';
 import Parallax from '../motion/Parallax';
 
-export default function HeroTraceCard() {
+export default function HeroFeatureCard() {
   return (
     <section className="py-12 md:py-16 bg-black relative">
       <div className="max-w-[1400px] mx-auto px-3 sm:px-5 md:px-6">

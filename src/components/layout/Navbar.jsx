@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Shield, Search, LayoutDashboard, Menu, X, ArrowUpRight, Layers, FileText, Activity } from 'lucide-react';
-
 import ConnectWalletButton from '../shared/ConnectWalletButton';
 
 export default function Navbar() {
@@ -20,10 +19,10 @@ export default function Navbar() {
 
   const navItems = [
     { href: '/', label: 'Home' },
-    { href: '/verify', label: 'Trace Studio', icon: Search },
-    { href: '/admin', label: 'Case Manager', icon: FileText },
-    { href: '/authority', label: 'VASP Portal', icon: Layers },
-    { href: '/dashboard', label: 'LEA Alerts', icon: Activity },
+    { href: '/verify', label: 'Use Cases' },
+    { href: '/admin', label: 'Pricing' },
+    { href: '/authority', label: 'Blog' },
+    { href: '/verify', label: 'Docs' },
   ];
 
   return (
@@ -34,11 +33,11 @@ export default function Navbar() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-18 py-3.5 flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-7 h-7 rounded-lg bg-white/[0.08] border border-white/[0.15] flex items-center justify-center text-white group-hover:border-evervault-purple transition-colors">
+            <div className="w-7 h-7 rounded-lg bg-white/[0.08] border border-white/[0.15] flex items-center justify-center text-white group-hover:border-purple-500 transition-colors">
               <Layers size={15} className="text-white" />
             </div>
             <span className="font-semibold text-base tracking-tight text-white flex items-center gap-1.5">
-              sahyog<span className="text-xs text-evervault-light/80 font-mono px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/[0.08]">intel</span>
+              sahyog
             </span>
           </Link>
 
@@ -48,7 +47,7 @@ export default function Navbar() {
               const isActive = href === '/' ? pathname === '/' : pathname.startsWith(href);
               return (
                 <Link
-                  key={href}
+                  key={label}
                   href={href}
                   className={`px-3.5 py-1 text-xs font-medium rounded-full transition-all duration-200 ${
                     isActive
@@ -81,7 +80,7 @@ export default function Navbar() {
           <div className="md:hidden border-b border-white/[0.08] bg-[#070913] px-5 py-4 space-y-2">
             {navItems.map(({ href, label }) => (
               <Link
-                key={href}
+                key={label}
                 href={href}
                 className="block px-3 py-2 rounded-xl text-sm text-slate-300 hover:text-white hover:bg-white/[0.05]"
                 onClick={() => setMobileOpen(false)}

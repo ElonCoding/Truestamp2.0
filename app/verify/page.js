@@ -110,16 +110,16 @@ export default function TraceStudioPage() {
         
         {/* Header Title */}
         <div className="text-center space-y-4 max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.1] text-xs font-mono text-evervault-light">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.1] text-xs font-mono text-purple-300">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>SAHYOG LIVE FORENSICS STUDIO</span>
+            <span>EVERVAULT ZERO-TRUST PLATFORM</span>
           </div>
 
           <h1 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight">
-            Automated <span className="text-violet-grad">VASP Attribution</span> & Trace Studio
+            Confidential <span className="text-violet-grad">Encryption & Enclaves</span> Studio
           </h1>
           <p className="text-slate-400 text-sm sm:text-base font-normal">
-            Input suspect cryptocurrency wallet address to compute multi-hop transaction graphs and identify nearest deposit exchange.
+            Test real-time inbound relay encryption, automated payload tokenization, and confidential computing enclaves.
           </p>
         </div>
 
@@ -144,12 +144,12 @@ export default function TraceStudioPage() {
               {isTracing ? (
                 <>
                   <RefreshCw size={15} className="animate-spin" />
-                  <span>Tracing Graph...</span>
+                  <span>Encrypting Payload...</span>
                 </>
               ) : (
                 <>
                   <Activity size={15} />
-                  <span>Run Attribution Trace</span>
+                  <span>Run Encryption Relay</span>
                 </>
               )}
             </button>
