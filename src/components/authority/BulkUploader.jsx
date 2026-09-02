@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, File, X, CheckCircle, AlertCircle, Zap, Loader2, Shield, Hash, Globe } from 'lucide-react';
 import { ethers } from 'ethers';
-import { TruestampContract } from '../../lib/contract';
+import { TruestampContract, getAmoyFeeOptions, parseContractError } from '../../lib/contract';
 import { CONSTANTS } from '../../lib/constants';
 import {
   validateFiles,
@@ -200,45 +200,14 @@ export default function BulkUploader({ onBatchComplete }) {
           setProgress(fakeP);
         }, 400);
 
-        let tx, receipt, txOptions;
+        let tx, receipt;
         try {
-          const feeData = await writeProvider.getFeeData();
-          let maxPriorityFeePerGas = feeData.maxPriorityFeePerGas || 0n;
-          const minTip = ethers.parseUnits('30', 'gwei');
-          if (maxPriorityFeePerGas < minTip) {
-            maxPriorityFeePerGas = minTip;
-          }
-          let maxFeePerGas = feeData.maxFeePerGas || 0n;
-          if (maxFeePerGas < maxPriorityFeePerGas) {
-            maxFeePerGas = maxPriorityFeePerGas + ethers.parseUnits('10', 'gwei');
-          }
-          txOptions = { maxPriorityFeePerGas, maxFeePerGas };
-
+          const txOptions = await getAmoyFeeOptions(writeProvider);
           tx = await contract.submitBatch(merkleRoot, ipfsCID, validFiles.length, txOptions);
           receipt = await tx.wait();
         } catch (chainErr) {
           clearInterval(ticker);
-
-          let msg = chainErr?.reason || chainErr?.shortMessage || chainErr?.message || 'Transaction failed';
-
-          // Handle ethers v6 obscure "could not coalesce error"
-          if (msg.includes('could not coalesce error')) {
-            const innerMsg = chainErr?.info?.error?.message || chainErr?.error?.message;
-            if (innerMsg) {
-              msg = innerMsg;
-            } else {
-              msg = 'Transaction reverted. This usually means your wallet is not whitelisted as an Authority (Issuer), or you lack MATIC for gas.';
-            }
-          }
-
-          // Detect AccessControl revert
-          const revertData = chainErr?.data || chainErr?.info?.error?.data || chainErr?.error?.data;
-          if (typeof revertData === 'string' && (revertData.startsWith('0xe2517d3f') || revertData.includes('AccessControl'))) {
-            msg = 'Access Denied: Wallet not authorized as Issuer. Ensure your wallet is whitelisted by admin.';
-          } else if (msg.includes('execution reverted')) {
-            msg = `Execution reverted: ${msg}`;
-          }
-
+          const msg = parseContractError(chainErr, 'Transaction failed');
           throw new Error(`Blockchain Error: ${msg}`);
         }
 
@@ -265,14 +234,11 @@ export default function BulkUploader({ onBatchComplete }) {
           const h = hashes[i];
           setProgress(Math.round(((i + 1) / hashes.length) * 100));
           try {
-            const txIndex = await contract.indexDocument(h.keccak, batchId, txOptions);
+            const indexFeeOptions = await getAmoyFeeOptions(writeProvider);
+            const txIndex = await contract.indexDocument(h.keccak, batchId, indexFeeOptions);
             await txIndex.wait();
           } catch (indexErr) {
-            let msg = indexErr?.reason || indexErr?.shortMessage || indexErr?.message || 'Indexing failed';
-            if (msg.includes('could not coalesce error')) {
-              const innerMsg = indexErr?.info?.error?.message || indexErr?.error?.message;
-              msg = innerMsg ? innerMsg : 'Transaction reverted (likely insufficient gas or unauthorized wallet).';
-            }
+            const msg = parseContractError(indexErr, 'Indexing failed');
             throw new Error(`Blockchain Indexing Error on file "${h.name}": ${msg}`);
           }
         }
