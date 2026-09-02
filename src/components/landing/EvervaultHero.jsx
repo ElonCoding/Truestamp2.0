@@ -130,19 +130,15 @@ export default function EvervaultHero() {
                 </TextReveal>
               </div>
 
-              {/* Action Buttons */}
-              <motion.div variants={itemVariants} className="flex items-center gap-3 pt-2">
+              {/* Action Buttons with Web3 Connect Wallet */}
+              <motion.div variants={itemVariants} className="flex flex-wrap items-center gap-3 pt-2">
+                <ConnectWalletButton className="px-6 py-2.5 text-xs sm:text-sm font-semibold" />
                 <Link 
                   href="/verify" 
-                  className="px-6 py-2.5 rounded-full bg-white text-black font-semibold text-xs sm:text-sm hover:bg-slate-200 hover:scale-105 active:scale-95 transition-all shadow-md"
+                  className="px-6 py-2.5 rounded-full bg-white/[0.08] hover:bg-white/[0.14] hover:scale-105 border border-white/[0.12] text-white font-medium text-xs sm:text-sm transition-all active:scale-95 flex items-center gap-1.5"
                 >
-                  Get started
-                </Link>
-                <Link 
-                  href="/admin" 
-                  className="px-6 py-2.5 rounded-full bg-white/[0.08] hover:bg-white/[0.14] hover:scale-105 border border-white/[0.12] text-white font-medium text-xs sm:text-sm transition-all active:scale-95"
-                >
-                  Get in touch
+                  <span>Launch Trace Studio</span>
+                  <span>→</span>
                 </Link>
               </motion.div>
             </motion.div>
