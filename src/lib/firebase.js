@@ -13,21 +13,35 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-// Initialize Firebase
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+// Initialize Firebase safely
+let app = null;
+let db = null;
+let auth = null;
+let analytics = null;
 
-// Initialize services
-export const db = getFirestore(app);
-export const auth = getAuth(app);
+const hasValidConfig = 
+  process.env.NEXT_PUBLIC_FIREBASE_API_KEY && 
+  !process.env.NEXT_PUBLIC_FIREBASE_API_KEY.includes('api_key_here') &&
+  process.env.NEXT_PUBLIC_FIREBASE_API_KEY.length > 5;
 
-// Initialize Analytics conditionally
-export let analytics;
-if (typeof window !== "undefined") {
-  isSupported().then((supported) => {
-    if (supported) {
-      analytics = getAnalytics(app);
+if (hasValidConfig) {
+  try {
+    app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+    db = getFirestore(app);
+    auth = getAuth(app);
+    if (typeof window !== "undefined") {
+      isSupported().then((supported) => {
+        if (supported && app) {
+          analytics = getAnalytics(app);
+        }
+      }).catch(() => {});
     }
-  });
+  } catch (err) {
+    console.warn("Firebase initialization error (falling back to mock mode):", err);
+    app = null;
+    db = null;
+    auth = null;
+  }
 }
 
-export { app };
+export { app, db, auth, analytics };

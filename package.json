@@ -19,6 +19,7 @@
     "firebase-admin": "^12.1.0",
     "framer-motion": "^11.0.0",
     "keccak256": "^1.0.6",
+    "lenis": "^1.3.26",
     "lucide-react": "^0.350.0",
     "merkletreejs": "^0.3.11",
     "next": "^14.2.0",
